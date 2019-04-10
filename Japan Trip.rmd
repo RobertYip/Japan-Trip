@@ -1,0 +1,151 @@
+---
+title: "Japan Vacation"
+author: "Robert Yip"
+date: "September 7, 2018"
+output: rmarkdown::github_document
+
+---
+##Scroll to bottom for visualization and summary
+
+Earlier this year, my friends who are budget conscious decided to keep track of every expense that we spent during our trip to Japan. While it took a lot of effort, the result was a small dataset to play with. For my enjoyment, I will clean up the data and visualize simple questions such as who spent the most? In what categories? And so on.
+
+
+
+```{r}
+getwd()
+df = read.csv("Japan trip.csv", header = TRUE)
+
+```
+
+Let's take a look at the structure.
+```{r}
+str(df)
+summary(df)
+head(df, 10)
+tail(df, 10)
+```
+First I will fix the date column. As records are collected and appended, the dates were left empty until the next day to save time, hence the NAs.
+I will copy the previous date first using na.locf, and then correct the date format.
+
+```{r}
+library(zoo)
+df$Date <- na.locf(df$Date)
+head(df, 5)  
+```
+The dates occured in March and April, so let's add back the year and month so we can transform it into date format. 
+Current data type is in integer. I first convert it to character for the manipulation before finally converting into date.
+```{r}
+typeof(df$Date) 
+
+#Need to create T/F vector for group of dates to apply, otherwise data type will change
+G1 <- df$Date >= 28                    #For the month of March, from my arrival date
+G2 <- df$Date < 10                     #For the month of April before the 10th.
+G3 <- df$Date >=10 & df$Date <=15      #For the month of April until departure.
+
+df$Date[G1] <- paste0("2018-03-", df$Date[G1])
+df$Date[G2] <- paste0("2018-04-0", df$Date[G2])
+df$Date[G3] <- paste0("2018-04-", df$Date[G3])
+
+df$Date <- as.Date(df$Date)
+head(df, 5)  
+```
+Much better! Moving on, we can skip the item column because it won't be used in the analysis. More importantly, the let's rename Item.1 to "Category" and confirm if the data is clean.
+```{r}
+colnames(df)[colnames(df)=="Item.1"] <- "Category"
+df$Category <- as.factor(df$Category)
+is.factor(df$Category)
+levels(df$Category)
+
+```
+We see that it is already in factor form, but there's some different casing and even spelling errors! Fortunately, all the first letters of each category is correct and unique. We can fix it by running a simple regular expression to capture the first character. Rather than typing everything out, I use a for loop to fix every category.
+```{r}
+fix_StartWith <-  c("aA", "cC", "fF", "hH", "mM", "sS", "tT")
+fix_StartWith <- paste0("^[", fix_StartWith, "]") #To add the regex conditions
+fix_ReplaceWith <- c("Attraction", "Coins", "Food", "Hotel", "Merchandise", "Souvenir", "Transport")
+
+for (i in 1:7){
+  levels(df$Category)[grepl(fix_StartWith[i], levels(df$Category))] <- fix_ReplaceWith[i]
+}
+
+  levels(df$Category)
+```
+We are almost done. Finally, let's change each NA value to 0 for each person so it can be useful.
+```{r}
+df[4:6][is.na(df[4:6])] <- 0
+```
+Now the data is ready to be graphed! Let's first write it to a clean file.
+```{r}
+write.csv(df, file = "Japan Trip Cleaned.csv")
+```
+
+##Visualization and Analysis
+We will visualize our data with ggplot here.
+```{r}
+library(ggplot2)
+library(dplyr)
+library(reshape2) #To make data flat
+```
+First we need to melt the data to flatten the data for analysis.
+```{r}
+dfmelt <- melt(df, id.vars = c("Date", "Item", "Category"), 
+               variable.name="Person", 
+               value.name = "Amount") 
+head(dfmelt)
+```
+We are ready to plot! First let's see the spending distribution of each category for each person.
+Note: I flipped the axis so the category labels will not overlap.
+```{r}
+ggplot(data=dfmelt, aes(x = Category, y = Amount)) +
+   geom_col(aes(fill = Person)) + 
+   coord_flip(xlim = NULL, ylim = NULL, expand = TRUE, clip = "on") +
+   facet_grid(Person~.) +
+   ggtitle("Spending Distribution in each category") +
+   ylab("Amount (Yen)") +
+   theme(
+     plot.title = element_text(size = 20, hjust = 0.5)
+   )
+
+```
+
+Consistent across all members, food is the highest expense, followed by hotel.
+Attractions and Transportation spending is roughly equal at a moderate amount.
+Rebecca is the only person that collects coins.
+
+Next question we can ask is, who spent the most money?
+```{r}
+ggplot(data=dfmelt, aes(x = Person, y = Amount)) +
+   geom_col(aes(fill = Category), colour = "black") + 
+   coord_flip(xlim = NULL, ylim = NULL, expand = TRUE, clip = "on") +
+   ggtitle("Who spent the most money?") +
+   ylab("Amount (Yen)") +
+   theme(
+     plot.title = element_text(size = 20, hjust = 0.5)
+   )
+
+```
+
+We see Rebecca spent the most and Justin spent the least. (The truth is, he left early and didn't stay the entire trip)
+
+There's two other features included in this graph. 
+One is, the categories are included to show the weight of the distribution in that category.
+The second is, adding the black line borders allows us to visualize the average amount of a transaction in each category. For example, each transaction in food is on the cheap side, whereas each hotel transaction is expensive.
+
+We can actually improve the detail of the above graph if we visualize by using a boxplot instead.
+```{r}
+ggplot(data=dfmelt, aes(x = Category, y = Amount)) +
+   geom_jitter(aes(colour = Person)) + 
+   geom_boxplot(alpha = 0.5) +
+   coord_flip(xlim = NULL, ylim = NULL, expand = TRUE, clip = "on") +
+   ggtitle("Amount per Transaction") +
+   ylab("Amount (Yen)") +
+   scale_y_continuous(breaks = pretty(dfmelt$Amount, n = 10)) +
+   theme(
+     plot.title = element_text(size = 20, hjust = 0.5)
+   )
+
+```
+
+With the boxplot, we see a lot more details such as the median cost of the transaction (middle of box), 25th/75th percentiles, and even some outliers.
+
+# Summary
+We cleaned and visualized the expense data for my collection. We asked some simple questions such as who spent the most and how much were spent in the different type of expenses. Hope it was an enjoyable read!
