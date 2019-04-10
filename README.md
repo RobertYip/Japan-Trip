@@ -3,6 +3,9 @@ Japan Vacation
 Robert Yip
 September 7, 2018
 
+Scroll to bottom for visualization and summary
+----------------------------------------------
+
 Earlier this year, my friends who are budget conscious decided to keep track of every expense that we spent during our trip to Japan. While it took a lot of effort, the result was a small dataset to play with. For my enjoyment, I will clean up the data and visualize simple questions such as who spent the most? In what categories? And so on.
 
 ``` r
@@ -178,13 +181,16 @@ We are almost done. Finally, let's change each NA value to 0 for each person so 
 df[4:6][is.na(df[4:6])] <- 0
 ```
 
-Now the data is ready to be graphed! Let's export the data to Tableau for visualization.
+Now the data is ready to be graphed! Let's first write it to a clean file.
 
 ``` r
 write.csv(df, file = "Japan Trip Cleaned.csv")
 ```
 
-We can also visualize our data with ggplot here.
+Visualization and Analysis
+--------------------------
+
+We will visualize our data with ggplot here.
 
 ``` r
 library(ggplot2)
@@ -237,7 +243,7 @@ ggplot(data=dfmelt, aes(x = Category, y = Amount)) +
    )
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-11-1.png)
+![](Japan_Trip_files/figure-markdown_github/unnamed-chunk-11-1.png)
 
 Consistent across all members, food is the highest expense, followed by hotel. Attractions and Transportation spending is roughly equal at a moderate amount. Rebecca is the only person that collects coins.
 
@@ -254,7 +260,7 @@ ggplot(data=dfmelt, aes(x = Person, y = Amount)) +
    )
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-12-1.png)
+![](Japan_Trip_files/figure-markdown_github/unnamed-chunk-12-1.png)
 
 We see Rebecca spent the most and Justin spent the least. (The truth is, he left early and didn't stay the entire trip)
 
@@ -275,7 +281,7 @@ ggplot(data=dfmelt, aes(x = Category, y = Amount)) +
    )
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-13-1.png)
+![](Japan_Trip_files/figure-markdown_github/unnamed-chunk-13-1.png)
 
 With the boxplot, we see a lot more details such as the median cost of the transaction (middle of box), 25th/75th percentiles, and even some outliers.
 
