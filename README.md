@@ -1,12 +1,12 @@
 Japan Vacation
 ================
-Robert Yip
-September 7, 2018
+Robert Yip  
+September 7, 2018  
 
 Scroll to bottom for visualization and summary
 ----------------------------------------------
 
-Earlier this year, my friends who are budget conscious decided to keep track of every expense that we spent during our trip to Japan. While it took a lot of effort, the result was a small dataset to play with. For my enjoyment, I will clean up the data and visualize simple questions such as who spent the most? In what categories? And so on.
+Earlier this year, my friends who are budget conscious decided to keep track of every expense that we spent during our trip to Japan. While it took a lot of effort, the result produced a small dataset to analyze. For my enjoyment, I cleaned up the data and answered simple questions through visualization on who spent the most? In what categories? And so on.
 
 ``` r
 getwd()
